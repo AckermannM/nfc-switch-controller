@@ -8,12 +8,13 @@ MFRC522DriverPinSimple ss_pin(10);
 MFRC522DriverSPI driver{ss_pin}; // Create SPI driver.
 MFRC522 mfrc522{driver};  // Create MFRC522 instance.
 
+// TODO: change to relay instead of mosfet
 const int MOSFET_SIG_PIN = 6;
 bool isMosfetOn = false;
 bool tagIsNotPresent = true;
 bool wrongCardPresent = false;
 
-// Key for activation
+// Key for activation (only put in before upload to device)
 const String KEY_UUID = "<redacted>";
 
 void setup() {
