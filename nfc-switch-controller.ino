@@ -18,8 +18,9 @@ const String KEY_UUID = "<redacted>";
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(RELAY_SIG_PIN, OUTPUT);
   Serial.begin(115200);
+  // DEBUG ONLY
+  // while(!Serial);
   mfrc522.PCD_Init();
   Serial.println(F("Ready!"));
   switchRelayOn();
@@ -60,14 +61,12 @@ void loop() {
 
 void switchRelayOn() {
   digitalWrite(RELAY_SIG_PIN, HIGH);
-  digitalWrite(LED_BUILTIN, HIGH);
   isRelayOn = true;
   delay(200);
 }
 
 void switchRelayOff() {
   digitalWrite(RELAY_SIG_PIN, LOW);
-  digitalWrite(LED_BUILTIN, LOW);
   isRelayOn = false;
   delay(200);
 }
