@@ -8,9 +8,8 @@ MFRC522DriverPinSimple ss_pin(10);
 MFRC522DriverSPI driver{ss_pin}; // Create SPI driver.
 MFRC522 mfrc522{driver};  // Create MFRC522 instance.
 
-// TODO: change to relay instead of mosfet
-const int MOSFET_SIG_PIN = 6;
-bool isMosfetOn = false;
+const int RELAY_SIG_PIN = 6;
+bool isRelayOn = false;
 bool tagIsNotPresent = true;
 bool wrongCardPresent = false;
 
@@ -19,26 +18,25 @@ const String KEY_UUID = "<redacted>";
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(MOSFET_SIG_PIN, OUTPUT);
+  pinMode(RELAY_SIG_PIN, OUTPUT);
   Serial.begin(115200);
-  // while (!Serial);
   mfrc522.PCD_Init();
   Serial.println(F("Ready!"));
-  switchMosfetOn();
+  switchRelayOn();
 }
 
 void loop() {
   // Weird workaround for https://github.com/miguelbalboa/rfid/issues/279
   tagIsNotPresent = !mfrc522.PICC_IsNewCardPresent() && !mfrc522.PICC_IsNewCardPresent();
   if (!tagIsNotPresent) {
-    if(isMosfetOn) {
+    if(isRelayOn) {
       if(!wrongCardPresent) {
         Serial.print(F("Tag found, checking key..."));
       }
       if (getTextRecord().equals(KEY_UUID)) {
         Serial.print(F("PASS\n"));
         Serial.println(F("Switching MOSFET off!"));
-        switchMosfetOff();
+        switchRelayOff();
       } else {
         if (!wrongCardPresent) {
           Serial.print(F("FAIL\n"));
@@ -51,26 +49,26 @@ void loop() {
     if (wrongCardPresent) {
       Serial.println(F("Tag removed."));
     } else {
-      if(!isMosfetOn) {
+      if(!isRelayOn) {
         Serial.println(F("Tag removed, switching MOSFET on!"));
-        switchMosfetOn();
+        switchRelayOn();
       }
     }
     wrongCardPresent = false;
   }
 }
 
-void switchMosfetOn() {
-  digitalWrite(MOSFET_SIG_PIN, HIGH);
+void switchRelayOn() {
+  digitalWrite(RELAY_SIG_PIN, HIGH);
   digitalWrite(LED_BUILTIN, HIGH);
-  isMosfetOn = true;
+  isRelayOn = true;
   delay(200);
 }
 
-void switchMosfetOff() {
-  digitalWrite(MOSFET_SIG_PIN, LOW);
+void switchRelayOff() {
+  digitalWrite(RELAY_SIG_PIN, LOW);
   digitalWrite(LED_BUILTIN, LOW);
-  isMosfetOn = false;
+  isRelayOn = false;
   delay(200);
 }
 
