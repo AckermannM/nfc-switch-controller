@@ -35,7 +35,7 @@ void loop() {
       }
       if (getTextRecord().equals(KEY_UUID)) {
         Serial.print(F("PASS\n"));
-        Serial.println(F("Switching MOSFET off!"));
+        Serial.println(F("Switching relay off!"));
         switchRelayOff();
       } else {
         if (!wrongCardPresent) {
@@ -50,7 +50,7 @@ void loop() {
       Serial.println(F("Tag removed."));
     } else {
       if(!isRelayOn) {
-        Serial.println(F("Tag removed, switching MOSFET on!"));
+        Serial.println(F("Tag removed, switching relay on!"));
         switchRelayOn();
       }
     }
