@@ -17,7 +17,7 @@ bool wrongCardPresent = false;
 const String KEY_UUID = "<redacted>";
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(RELAY_SIG_PIN, OUTPUT);
   Serial.begin(115200);
   // DEBUG ONLY
   // while(!Serial);
