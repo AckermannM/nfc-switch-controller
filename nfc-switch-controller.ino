@@ -16,12 +16,14 @@ MFRC522DriverSPI driver{ss_pin}; // Create SPI driver.
 MFRC522 mfrc522{driver};  // Create MFRC522 instance.
 
 const int RELAY_SIG_PIN = 6;
+const int REFLECTION_PIN = 4;
 byte relayState = 0;
 bool tagIsNotPresent = true;
 bool wrongCardPresent = false;
 
 void setup() {
   pinMode(RELAY_SIG_PIN, OUTPUT);
+  pinMode(REFLECTION_PIN, OUTPUT);
   mfrc522.PCD_Init();
 }
 
@@ -52,6 +54,7 @@ void loop() {
 
 void toggleRelay() {
   digitalWrite(RELAY_SIG_PIN, !digitalRead(RELAY_SIG_PIN));
+  digitalWrite(REFLECTION_PIN, !digitalRead(REFLECTION_PIN));
   relayState = 1 - relayState;
   delay(200);
 }
