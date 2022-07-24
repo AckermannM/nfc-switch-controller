@@ -7,7 +7,7 @@
 #define DEBUG
 
 #ifndef TAG_DATA 
-#pragma GCC error "Please create tag-data.h with KEY_UID definition"
+#pragma GCC error "Please create tag-data.h with KEY_UID definition. See README.md"
 #endif
 
 MFRC522DriverPinSimple ss_pin(10);
