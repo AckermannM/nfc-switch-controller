@@ -2,6 +2,13 @@
 #include <MFRC522DriverSPI.h>
 #include <MFRC522DriverPinSimple.h>
 #include <MFRC522Debug.h>
+#include "tag-data.h"
+
+#define DEBUG
+
+#ifndef TAG_DATA 
+#pragma GCC error "Please create tag-data.h with KEY_UID definition"
+#endif
 
 MFRC522DriverPinSimple ss_pin(10);
 
@@ -9,101 +16,57 @@ MFRC522DriverSPI driver{ss_pin}; // Create SPI driver.
 MFRC522 mfrc522{driver};  // Create MFRC522 instance.
 
 const int RELAY_SIG_PIN = 6;
-bool isRelayOn = false;
+byte relayState = 0;
 bool tagIsNotPresent = true;
 bool wrongCardPresent = false;
 
-// Key for activation (only put in before upload to device)
-const String KEY_UUID = "<redacted>";
-
 void setup() {
   pinMode(RELAY_SIG_PIN, OUTPUT);
-  Serial.begin(115200);
-  // DEBUG ONLY
-  // while(!Serial);
   mfrc522.PCD_Init();
-  Serial.println(F("Ready!"));
-  switchRelayOn();
 }
 
 void loop() {
-  // Weird workaround for https://github.com/miguelbalboa/rfid/issues/279
+  // Workaround for https://github.com/miguelbalboa/rfid/issues/279
   tagIsNotPresent = !mfrc522.PICC_IsNewCardPresent() && !mfrc522.PICC_IsNewCardPresent();
+  
+  mfrc522.PICC_ReadCardSerial();
+  String uidString = uidToString(&(mfrc522.uid));
+  
   if (!tagIsNotPresent) {
-    if(isRelayOn) {
-      if(!wrongCardPresent) {
-        Serial.print(F("Tag found, checking key..."));
-      }
-      if (getTextRecord().equals(KEY_UUID)) {
-        Serial.print(F("PASS\n"));
-        Serial.println(F("Switching relay off!"));
-        switchRelayOff();
+    if(relayState == 0) {
+      if (uidString.equals(KEY_UID)) {
+        toggleRelay();
       } else {
         if (!wrongCardPresent) {
-          Serial.print(F("FAIL\n"));
-          Serial.println(F("Provide correct tag!"));
           wrongCardPresent = true;
         }
       }
     }
   } else {
-    if (wrongCardPresent) {
-      Serial.println(F("Tag removed."));
-    } else {
-      if(!isRelayOn) {
-        Serial.println(F("Tag removed, switching relay on!"));
-        switchRelayOn();
-      }
+    if (!wrongCardPresent && relayState == 1) {
+      toggleRelay();
     }
     wrongCardPresent = false;
   }
 }
 
-void switchRelayOn() {
-  digitalWrite(RELAY_SIG_PIN, HIGH);
-  isRelayOn = true;
+void toggleRelay() {
+  digitalWrite(RELAY_SIG_PIN, !digitalRead(RELAY_SIG_PIN));
+  relayState = 1 - relayState;
   delay(200);
 }
 
-void switchRelayOff() {
-  digitalWrite(RELAY_SIG_PIN, LOW);
-  isRelayOn = false;
-  delay(200);
-}
-
-String getTextRecord() {
-  byte byteCount;
-  byte buffer[18];
-  byte i;
-  String outputString = "";
-  bool startFound = false;
-  bool endFound = false;
-  //  Ultralight C has 135 pages
-  for(byte page = 0; page < 135; page += 4) { // Read returns data for 4 pages at a time.
-    // Read pages
-    byteCount = sizeof(buffer);
-    mfrc522.MIFARE_Read(page, buffer, &byteCount);
-    // Dump data
-    for(byte offset = 0; offset < 4; offset++) {
-      i = page+offset;
-      for(byte index = 0; index < 4; index++) {
-        i = 4*offset+index;
-        // NTAG215 text record content starts with 0x6E
-        if(buffer[i] == 0x6E) {
-          startFound = true;
-          continue;
-        }
-        // NTAG215 text record content ends with 0xFE
-        if(buffer[i] == 0xFE) {
-          endFound = true;
-          continue;
-        }
-        if(startFound && !endFound) {
-          outputString += (char)buffer[i];
-        }
-      }
+String uidToString(MFRC522::Uid * uids) {
+  String recievedUid;
+  for(byte i = 0; i < uids->size; i++) {
+    if (i > 0) {
+      recievedUid += ":";
+    }
+    if(uids->uidByte[i] < 0x10) {
+      recievedUid += "0" + String(uids->uidByte[i], HEX);
+    } else {
+      recievedUid += String(uids->uidByte[i], HEX);
     }
   }
-  outputString.trim();
-  return outputString;
+  return recievedUid;
 }
